@@ -55,7 +55,14 @@ public class DynamicScript implements Script {
 
 	@Override
 	public ExecutorGroup getRoot() throws IOException, ParseException {
-		return root == null ? new SequenceExecutor(null, null, null) : null;
+		if (root == null) {
+			synchronized(this) {
+				if (root == null) {
+					root = new SequenceExecutor(null, null, null);
+				}
+			}
+		}
+		return root;
 	}
 
 	@Override

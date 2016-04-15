@@ -43,6 +43,9 @@ public class GlueServiceManager implements ArtifactManager<GlueServiceArtifact> 
 		Resource child = entry.getContainer().getChild("script.glue");
 		InputStream content = artifact.getContent();
 		if (content != null) {
+			if (child == null) {
+				child = ((ManageableContainer<?>) entry.getContainer()).create("script.glue", "text/plain");
+			}
 			try {
 				WritableContainer<ByteBuffer> writable = ((WritableResource) child).getWritable();
 				try {

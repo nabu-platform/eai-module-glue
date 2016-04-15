@@ -74,6 +74,7 @@ public class GlueServiceArtifact implements DefinedService {
 	
 	public void setContent(String content) throws IOException, ParseException {
 		script.setContent(content);
+		service = null;
 	}
 	
 }
