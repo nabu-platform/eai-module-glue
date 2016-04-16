@@ -16,6 +16,7 @@ import be.nabu.glue.services.ServiceMethodProvider;
 import be.nabu.libs.services.api.DefinedService;
 import be.nabu.libs.services.api.ServiceInstance;
 import be.nabu.libs.services.api.ServiceInterface;
+import be.nabu.utils.io.IOUtils;
 
 public class GlueServiceArtifact implements DefinedService {
 
@@ -68,8 +69,22 @@ public class GlueServiceArtifact implements DefinedService {
 		return getService().getReferences();
 	}
 	
-	public InputStream getContent() {
-		return script.getSource();
+	public String getContent() {
+		InputStream content = script.getSource();
+		if (content != null) {
+			try {
+				try {
+					return new String(IOUtils.toBytes(IOUtils.wrap(content)), Charset.defaultCharset());
+				}
+				finally {
+					content.close();
+				}
+			}
+			catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return null;
 	}
 	
 	public void setContent(String content) throws IOException, ParseException {

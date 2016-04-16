@@ -1,7 +1,6 @@
 package be.nabu.eai.module.services.glue;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -41,22 +40,17 @@ public class GlueServiceManager implements ArtifactManager<GlueServiceArtifact> 
 	@Override
 	public List<Validation<?>> save(ResourceEntry entry, GlueServiceArtifact artifact) throws IOException {
 		Resource child = entry.getContainer().getChild("script.glue");
-		InputStream content = artifact.getContent();
+		String content = artifact.getContent();
 		if (content != null) {
 			if (child == null) {
 				child = ((ManageableContainer<?>) entry.getContainer()).create("script.glue", "text/plain");
 			}
+			WritableContainer<ByteBuffer> writable = ((WritableResource) child).getWritable();
 			try {
-				WritableContainer<ByteBuffer> writable = ((WritableResource) child).getWritable();
-				try {
-					IOUtils.copyBytes(IOUtils.wrap(content), writable);
-				}
-				finally {
-					writable.close();
-				}
+				IOUtils.copyBytes(IOUtils.wrap(content.getBytes(), true), writable);
 			}
 			finally {
-				content.close();
+				writable.close();
 			}
 		}
 		// if the child exists but there is no source, you wiped it or something, remove it
