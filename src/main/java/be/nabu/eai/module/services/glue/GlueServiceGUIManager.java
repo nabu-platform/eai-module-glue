@@ -6,10 +6,11 @@ import java.util.List;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;
 import be.nabu.eai.developer.MainController;
 import be.nabu.eai.developer.managers.base.BaseArtifactGUIInstance;
@@ -20,6 +21,7 @@ import be.nabu.eai.developer.util.ElementTreeItem;
 import be.nabu.eai.repository.api.Entry;
 import be.nabu.eai.repository.api.ResourceEntry;
 import be.nabu.eai.repository.resources.RepositoryEntry;
+import be.nabu.jfx.control.ace.AceEditor;
 import be.nabu.jfx.control.tree.Tree;
 import be.nabu.libs.property.api.Property;
 import be.nabu.libs.property.api.Value;
@@ -35,14 +37,14 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 	}
 
 	@Override
-	public void display(MainController controller, AnchorPane pane, GlueServiceArtifact artifact) throws IOException, ParseException {
+	public void display(MainController controller, AnchorPane pane, final GlueServiceArtifact artifact) throws IOException, ParseException {
 		// TODO Auto-generated method stub
 		// Show a text area and the input/output interface at the bottom
 		// refresh the interface whenever you change focus on the textarea
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.VERTICAL);
-		final TextArea text = new TextArea();
-		text.setText(artifact.getContent());
+		final AceEditor ace = new AceEditor();
+		ace.setContent("text/x-glue", artifact.getContent());
 		SplitPane iface = new SplitPane();
 		iface.setOrientation(Orientation.HORIZONTAL);
 		
@@ -63,30 +65,58 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		
 		iface.getItems().addAll(left, right);
 		
-		text.focusedProperty().addListener(new ChangeListener<Boolean>() {
+		ace.getWebView().focusedProperty().addListener(new ChangeListener<Boolean>() {
 			@Override
 			public void changed(ObservableValue<? extends Boolean> arg0, Boolean arg1, Boolean arg2) {
-				if (artifact.getContent() == null || !artifact.getContent().equals(text.getText())) {
-					try {
-						artifact.setContent(text.getText());
-						input.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getInputDefinition()), null, false, false));
-						output.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getOutputDefinition()), null, false, false));
-						MainController.getInstance().setChanged();
-					}
-					catch (Exception e) {
-						MainController.getInstance().notify(new ValidationMessage(Severity.ERROR, "Could not parse content: " + e.getMessage()));
-					}
+				if (arg2 && (artifact.getContent() == null || !artifact.getContent().equals(ace.getContent()))) {
+					updateContent(artifact, ace, output, input);
+				}
+			}
+
+		});
+		ace.subscribe(AceEditor.CHANGE, new EventHandler<Event>() {
+			@Override
+			public void handle(Event arg0) {
+				MainController.getInstance().setChanged();				
+			}
+		});
+		ace.subscribe(AceEditor.SAVE, new EventHandler<Event>() {
+			@Override
+			public void handle(Event arg0) {
+				try {
+					updateContent(artifact, ace, output, input);
+					MainController.getInstance().save(artifact.getId());
+				}
+				catch (Exception e) {
+					MainController.getInstance().notify(new ValidationMessage(Severity.ERROR, "Could not save: " + e.getMessage()));
 				}
 			}
 		});
+		ace.subscribe(AceEditor.CLOSE, new EventHandler<Event>() {
+			@Override
+			public void handle(Event arg0) {
+				MainController.getInstance().close(artifact.getId());
+			}
+		});
 
-		split.getItems().addAll(text, iface);
+		split.getItems().addAll(ace.getWebView(), iface);
 		pane.getChildren().add(split);
 		
 		AnchorPane.setBottomAnchor(split, 0d);
 		AnchorPane.setTopAnchor(split, 0d);
 		AnchorPane.setLeftAnchor(split, 0d);
 		AnchorPane.setRightAnchor(split, 0d);
+	}
+
+	private void updateContent(final GlueServiceArtifact artifact, final AceEditor ace, final Tree<Element<?>> output, final Tree<Element<?>> input) {
+		try {
+			artifact.setContent(ace.getContent());
+			input.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getInputDefinition()), null, false, false));
+			output.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getOutputDefinition()), null, false, false));
+		}
+		catch (Exception e) {
+			MainController.getInstance().notify(new ValidationMessage(Severity.ERROR, "Could not parse content: " + e.getMessage()));
+		}
 	}
 
 	@Override
