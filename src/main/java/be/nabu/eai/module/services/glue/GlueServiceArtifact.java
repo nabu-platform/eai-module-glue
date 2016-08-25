@@ -30,21 +30,22 @@ public class GlueServiceArtifact implements DefinedService {
 	private DynamicScript script;
 	private ExecutionEnvironment executionEnvironment;
 	private ResourceContainer<?> directory;
+	private ResourceContainer<?> resourceDirectory;
 
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository) throws IOException {
 		this.directory = directory;
 		// TODO: default service run uses local service runtime instead of an actual runner, this should probably be updated
 		scriptRepository = new DynamicScriptRepository(new GlueParserProvider(new ServiceMethodProvider(repository, repository)));
-		Resource child = directory.getChild(EAIResourceRepository.PRIVATE);
-		if (child == null) {
-			child = ((ManageableContainer<?>) directory).create(EAIResourceRepository.PRIVATE, Resource.CONTENT_TYPE_DIRECTORY);
+		resourceDirectory = (ResourceContainer<?>) directory.getChild(EAIResourceRepository.PRIVATE);
+		if (resourceDirectory == null) {
+			resourceDirectory = (ResourceContainer<?>) ((ManageableContainer<?>) directory).create(EAIResourceRepository.PRIVATE, Resource.CONTENT_TYPE_DIRECTORY);
 		}
 		script = new DynamicScript(
 			id.indexOf('.') > 0 ? id.substring(0, id.lastIndexOf('.')) : null,
 			id.indexOf('.') > 0 ? id.substring(id.lastIndexOf('.') + 1) : id,
 			scriptRepository,
 			Charset.defaultCharset(),
-			(ResourceContainer<?>) child
+			(ResourceContainer<?>) resourceDirectory
 		);
 		executionEnvironment = new SimpleExecutionEnvironment("local");
 		this.id = id;
@@ -112,4 +113,7 @@ public class GlueServiceArtifact implements DefinedService {
 		return directory;
 	}
 	
+	public ResourceContainer<?> getResourceDirectory() {
+		return resourceDirectory;
+	}
 }

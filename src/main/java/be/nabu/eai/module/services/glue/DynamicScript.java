@@ -32,6 +32,7 @@ public class DynamicScript implements Script {
 	private ExecutorGroup root;
 	private Parser parser;
 	private ResourceContainer<?> resources;
+	private List<String> result;
 	
 	public DynamicScript(String namespace, String name, ScriptRepository repository, Charset charset, ResourceContainer<?> resources) {
 		this.namespace = namespace;
@@ -45,9 +46,16 @@ public class DynamicScript implements Script {
 	
 	@Override
 	public Iterator<String> iterator() {
-		List<String> result = new ArrayList<String>();
-		for (Resource resource : resources) {
-			result.add(resource.getName());
+		if (result == null) {
+			synchronized(this) {
+				if (result == null) {
+					List<String> result = new ArrayList<String>();
+					for (Resource resource : resources) {
+						result.add(resource.getName());
+					}
+					this.result = result;
+				}
+			}
 		}
 		return result.iterator();
 	}
