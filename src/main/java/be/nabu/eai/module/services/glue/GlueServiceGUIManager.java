@@ -18,6 +18,7 @@ import be.nabu.eai.developer.managers.base.BasePortableGUIManager;
 import be.nabu.eai.developer.managers.util.ElementMarshallable;
 import be.nabu.eai.developer.util.ElementSelectionListener;
 import be.nabu.eai.developer.util.ElementTreeItem;
+import be.nabu.eai.repository.api.ArtifactManager;
 import be.nabu.eai.repository.api.Entry;
 import be.nabu.eai.repository.api.ResourceEntry;
 import be.nabu.eai.repository.resources.RepositoryEntry;
@@ -32,8 +33,15 @@ import be.nabu.libs.validator.api.ValidationMessage.Severity;
 
 public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArtifact, BaseArtifactGUIInstance<GlueServiceArtifact>> {
 
+	private Tree<Element<?>> output;
+	private Tree<Element<?>> input;
+
 	public GlueServiceGUIManager() {
 		super("Glue Service", GlueServiceArtifact.class, new GlueServiceManager());
+	}
+	
+	public GlueServiceGUIManager(String name, Class<GlueServiceArtifact> artifactClass, ArtifactManager<GlueServiceArtifact> artifactManager) {
+		super(name, artifactClass, artifactManager);
 	}
 
 	@Override
@@ -43,36 +51,51 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		// refresh the interface whenever you change focus on the textarea
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.VERTICAL);
-		final AceEditor ace = new AceEditor();
-		ace.setContent("text/x-glue", artifact.getContent());
+		final AceEditor ace = getEditor(artifact);
+		SplitPane iface = getIface(controller, artifact);
+
+		split.getItems().addAll(ace.getWebView(), iface);
+		pane.getChildren().add(split);
+		
+		AnchorPane.setBottomAnchor(split, 0d);
+		AnchorPane.setTopAnchor(split, 0d);
+		AnchorPane.setLeftAnchor(split, 0d);
+		AnchorPane.setRightAnchor(split, 0d);
+	}
+
+	protected SplitPane getIface(MainController controller, final GlueServiceArtifact artifact) {
 		SplitPane iface = new SplitPane();
 		iface.setOrientation(Orientation.HORIZONTAL);
 		
 		ScrollPane right = new ScrollPane();
 		ElementSelectionListener elementSelectionListener = new ElementSelectionListener(controller, false, true);
-		final Tree<Element<?>> output = new Tree<Element<?>>(new ElementMarshallable());
+		output = new Tree<Element<?>>(new ElementMarshallable());
 		output.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getOutputDefinition()), null, false, false));
 		output.prefWidthProperty().bind(right.widthProperty());
 		output.getSelectionModel().selectedItemProperty().addListener(elementSelectionListener);
 		right.setContent(output);
 		
 		ScrollPane left = new ScrollPane();
-		final Tree<Element<?>> input = new Tree<Element<?>>(new ElementMarshallable());
+		input = new Tree<Element<?>>(new ElementMarshallable());
 		input.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getInputDefinition()), null, false, false));
 		left.setContent(input);
 		input.prefWidthProperty().bind(left.widthProperty());
 		input.getSelectionModel().selectedItemProperty().addListener(elementSelectionListener);
 		
 		iface.getItems().addAll(left, right);
-		
+		return iface;
+	}
+	
+	public AceEditor getEditor(final GlueServiceArtifact artifact) {
+		AceEditor ace = new AceEditor();
+		ace.setContent("text/x-glue", artifact.getContent());
 		ace.getWebView().focusedProperty().addListener(new ChangeListener<Boolean>() {
 			@Override
 			public void changed(ObservableValue<? extends Boolean> arg0, Boolean arg1, Boolean arg2) {
 				if (arg2 && (artifact.getContent() == null || !artifact.getContent().equals(ace.getContent()))) {
-					updateContent(artifact, ace, output, input);
+					updateContent(artifact, ace);
 				}
 			}
-
 		});
 		ace.subscribe(AceEditor.CHANGE, new EventHandler<Event>() {
 			@Override
@@ -84,7 +107,7 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 			@Override
 			public void handle(Event arg0) {
 				try {
-					updateContent(artifact, ace, output, input);
+					updateContent(artifact, ace);
 					MainController.getInstance().save(artifact.getId());
 				}
 				catch (Exception e) {
@@ -98,21 +121,18 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 				MainController.getInstance().close(artifact.getId());
 			}
 		});
-
-		split.getItems().addAll(ace.getWebView(), iface);
-		pane.getChildren().add(split);
-		
-		AnchorPane.setBottomAnchor(split, 0d);
-		AnchorPane.setTopAnchor(split, 0d);
-		AnchorPane.setLeftAnchor(split, 0d);
-		AnchorPane.setRightAnchor(split, 0d);
+		return ace;
 	}
 
-	private void updateContent(final GlueServiceArtifact artifact, final AceEditor ace, final Tree<Element<?>> output, final Tree<Element<?>> input) {
+	private void updateContent(final GlueServiceArtifact artifact, final AceEditor ace) {
 		try {
 			artifact.setContent(ace.getContent());
-			input.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getInputDefinition()), null, false, false));
-			output.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getOutputDefinition()), null, false, false));
+			if (input != null) {
+				input.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getInputDefinition()), null, false, false));
+			}
+			if (output != null) {
+				output.rootProperty().set(new ElementTreeItem(new RootElement(artifact.getServiceInterface().getOutputDefinition()), null, false, false));
+			}
 		}
 		catch (Exception e) {
 			MainController.getInstance().notify(new ValidationMessage(Severity.ERROR, "Could not parse content: " + e.getMessage()));
@@ -136,7 +156,7 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 
 	@Override
 	protected GlueServiceArtifact newInstance(MainController controller, RepositoryEntry entry, Value<?>...values) throws IOException {
-		return new GlueServiceArtifact(entry.getId(), entry.getRepository());
+		return new GlueServiceArtifact(entry.getId(), entry.getContainer(), entry.getRepository());
 	}
 
 	@Override

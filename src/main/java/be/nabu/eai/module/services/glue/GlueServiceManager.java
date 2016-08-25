@@ -20,9 +20,13 @@ import be.nabu.utils.io.api.WritableContainer;
 
 public class GlueServiceManager implements ArtifactManager<GlueServiceArtifact> {
 
+	public GlueServiceArtifact newArtifact(ResourceEntry entry) throws IOException {
+		return new GlueServiceArtifact(entry.getId(), entry.getContainer(), entry.getRepository());
+	}
+	
 	@Override
 	public GlueServiceArtifact load(ResourceEntry entry, List<Validation<?>> messages) throws IOException, ParseException {
-		GlueServiceArtifact service = new GlueServiceArtifact(entry.getId(), entry.getRepository());
+		GlueServiceArtifact service = newArtifact(entry);
 		Resource child = entry.getContainer().getChild("script.glue");
 		if (child != null) {
 			ReadableContainer<ByteBuffer> readable = ((ReadableResource) child).getReadable();
