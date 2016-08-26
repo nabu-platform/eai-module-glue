@@ -56,7 +56,7 @@ public class GlueServiceArtifact implements DefinedService {
 		return id;
 	}
 
-	private GlueService getService() {
+	protected GlueService getService() {
 		if (service == null) {
 			synchronized(this) {
 				if (service == null) {
@@ -65,6 +65,10 @@ public class GlueServiceArtifact implements DefinedService {
 			}
 		}
 		return service;
+	}
+	
+	protected void reset() {
+		service = null;
 	}
 	
 	@Override
@@ -102,7 +106,7 @@ public class GlueServiceArtifact implements DefinedService {
 	
 	public void setContent(String content) throws IOException, ParseException {
 		script.setContent(content);
-		service = null;
+		reset();
 	}
 
 	public DynamicScript getScript() {
@@ -116,4 +120,9 @@ public class GlueServiceArtifact implements DefinedService {
 	public ResourceContainer<?> getResourceDirectory() {
 		return resourceDirectory;
 	}
+
+	public ExecutionEnvironment getExecutionEnvironment() {
+		return executionEnvironment;
+	}
+	
 }

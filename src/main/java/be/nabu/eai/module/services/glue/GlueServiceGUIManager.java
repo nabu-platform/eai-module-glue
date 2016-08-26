@@ -15,6 +15,7 @@ import java.util.Set;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -25,12 +26,14 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import be.nabu.eai.developer.MainController;
+import be.nabu.eai.developer.ResourceManagerFactory;
+import be.nabu.eai.developer.api.ResourceManagerInstance;
 import be.nabu.eai.developer.managers.base.BaseArtifactGUIInstance;
 import be.nabu.eai.developer.managers.base.BasePortableGUIManager;
 import be.nabu.eai.developer.managers.util.ElementMarshallable;
@@ -64,7 +67,7 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 
 	private Tree<Element<?>> output;
 	private Tree<Element<?>> input;
-	private Map<Resource, TextArea> resources = new HashMap<Resource, TextArea>(); 
+	private Map<Resource, ResourceManagerInstance> managers = new HashMap<Resource, ResourceManagerInstance>(); 
 
 	public GlueServiceGUIManager() {
 		super("Glue Service", GlueServiceArtifact.class, new GlueServiceManager());
@@ -105,6 +108,7 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 	
 	protected Pane getResources(MainController controller, GlueServiceArtifact artifact) {
 		ListView<String> resources = new ListView<String>();
+		
 		HBox box = new HBox();
 		
 		HBox buttons = new HBox();
@@ -196,13 +200,20 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 				});
 			}
 		});
+		final TabPane tabs = new TabPane();
 		
 		Button delete = new Button("Delete");
-		upload.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
+		delete.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
 				String selectedItem = resources.getSelectionModel().getSelectedItem();
 				if (selectedItem != null) {
+					// close any tab related to it
+					for (int i = tabs.getTabs().size() - 1; i >= 0; i--) {
+						if (tabs.getTabs().get(i).getId().equals(selectedItem)) {
+							tabs.getTabs().remove(i);
+						}
+					}
 					try {
 						((ManageableContainer<?>) artifact.getResourceDirectory()).delete(selectedItem);
 					}
@@ -217,18 +228,46 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		
 		buttons.getChildren().addAll(create, upload, delete);
 		
-		VBox vbox = new VBox();
-		vbox.getChildren().addAll(buttons, resources);
-		
-		final TabPane tabs = new TabPane();
-		
 		for (Resource resource : artifact.getResourceDirectory()) {
 			if (resource instanceof ReadableResource) {
 				resources.getItems().add(resource.getName());
 			}
 		}
 		
+		resources.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> arg0, String arg1, String arg2) {
+				Resource resource = artifact.getResourceDirectory().getChild(arg2);
+				if (resource != null && !managers.containsKey(resource)) {
+					ResourceManagerInstance instance = ResourceManagerFactory.getInstance().manage(resource);
+					Tab tab = new Tab(resource.getName());
+					tab.setId(resource.getName());
+					tab.setContent(instance.getView());
+					tabs.getTabs().add(tab);
+					tabs.getSelectionModel().select(tab);
+					managers.put(resource, instance);
+				}
+			}
+		});
+		
+		tabs.getTabs().addListener(new ListChangeListener<Tab>() {
+			@Override
+			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Tab> change) {
+				while (change.next()) {
+					if (change.wasRemoved()) {
+						for (Tab tab : change.getRemoved()) {
+							Resource resource = artifact.getResourceDirectory().getChild(tab.getId());
+							managers.remove(resource);
+						}
+					}
+				}
+			}
+		});
+		
+		VBox vbox = new VBox();
+		vbox.getChildren().addAll(buttons, resources);
 		box.getChildren().addAll(vbox, tabs);
+		HBox.setHgrow(tabs, Priority.ALWAYS);
 		return box;
 	}
 
@@ -319,7 +358,9 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 			@Override
 			public List<Validation<?>> save() throws IOException {
 				List<Validation<?>> save = super.save();
-				// TODO: save open resources as well
+				for (ResourceManagerInstance instance : managers.values()) {
+					instance.save();
+				}
 				return save;
 			}
 		};
