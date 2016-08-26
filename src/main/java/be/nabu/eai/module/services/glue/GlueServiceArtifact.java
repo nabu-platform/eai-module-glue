@@ -9,6 +9,7 @@ import java.util.Set;
 import be.nabu.eai.repository.EAIResourceRepository;
 import be.nabu.eai.repository.api.Repository;
 import be.nabu.glue.api.ExecutionEnvironment;
+import be.nabu.glue.api.ParserProvider;
 import be.nabu.glue.api.ScriptRepository;
 import be.nabu.glue.impl.SimpleExecutionEnvironment;
 import be.nabu.glue.impl.parsers.GlueParserProvider;
@@ -31,11 +32,12 @@ public class GlueServiceArtifact implements DefinedService {
 	private ExecutionEnvironment executionEnvironment;
 	private ResourceContainer<?> directory;
 	private ResourceContainer<?> resourceDirectory;
+	private GlueParserProvider provider;
 
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository) throws IOException {
 		this.directory = directory;
-		// TODO: default service run uses local service runtime instead of an actual runner, this should probably be updated
-		scriptRepository = new DynamicScriptRepository(new GlueParserProvider(new ServiceMethodProvider(repository, repository)));
+		provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository));
+		scriptRepository = new DynamicScriptRepository(provider);
 		resourceDirectory = (ResourceContainer<?>) directory.getChild(EAIResourceRepository.PRIVATE);
 		if (resourceDirectory == null) {
 			resourceDirectory = (ResourceContainer<?>) ((ManageableContainer<?>) directory).create(EAIResourceRepository.PRIVATE, Resource.CONTENT_TYPE_DIRECTORY);
@@ -125,4 +127,7 @@ public class GlueServiceArtifact implements DefinedService {
 		return executionEnvironment;
 	}
 	
+	public ParserProvider getParserProvider() {
+		return provider;
+	}
 }
