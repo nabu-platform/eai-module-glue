@@ -4,15 +4,33 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import be.nabu.eai.repository.api.ArtifactManager;
+import be.nabu.eai.repository.api.Entry;
 import be.nabu.eai.repository.api.ResourceEntry;
+import be.nabu.glue.api.AssignmentExecutor;
+import be.nabu.glue.api.Executor;
+import be.nabu.glue.api.ExecutorGroup;
+import be.nabu.glue.impl.executors.BaseExecutor;
+import be.nabu.glue.impl.executors.EvaluateExecutor;
+import be.nabu.glue.impl.executors.ForEachExecutor;
+import be.nabu.glue.impl.executors.SwitchExecutor;
+import be.nabu.libs.evaluator.QueryPart;
+import be.nabu.libs.evaluator.api.Operation;
+import be.nabu.libs.evaluator.api.OperationProvider.OperationType;
 import be.nabu.libs.resources.api.ManageableContainer;
 import be.nabu.libs.resources.api.ReadableResource;
 import be.nabu.libs.resources.api.Resource;
 import be.nabu.libs.resources.api.WritableResource;
 import be.nabu.libs.validator.api.Validation;
+import be.nabu.libs.validator.api.ValidationMessage;
+import be.nabu.libs.validator.api.ValidationMessage.Severity;
 import be.nabu.utils.io.IOUtils;
 import be.nabu.utils.io.api.ByteBuffer;
 import be.nabu.utils.io.api.ReadableContainer;
@@ -71,14 +89,76 @@ public class GlueServiceManager implements ArtifactManager<GlueServiceArtifact> 
 
 	@Override
 	public List<String> getReferences(GlueServiceArtifact artifact) throws IOException {
-		// TODO: calculate types & services used
-		return new ArrayList<String>();
+		Set<String> references = new HashSet<String>();
+		try {
+			getReferences(artifact.getScript().getRoot(), references);
+		}
+		catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
+		Iterator<String> iterator = references.iterator();
+		while(iterator.hasNext()) {
+			Entry entry = artifact.getRepository().getEntry(iterator.next());
+			if (entry == null || !entry.isNode()) {
+				iterator.remove();
+			}
+		}
+		return new ArrayList<String>(references);
+	}
+	
+	public static void getReferences(ExecutorGroup group, Set<String> references) {
+		for (Executor executor : group.getChildren()) {
+			if (executor instanceof AssignmentExecutor) {
+				String optionalType = ((AssignmentExecutor) executor).getOptionalType();
+				if (optionalType != null) {
+					references.add(optionalType);
+				}
+			}
+			if (executor instanceof BaseExecutor) {
+				getReferences(((BaseExecutor) executor).getCondition(), references);
+			}
+			if (executor instanceof SwitchExecutor) {
+				getReferences(((SwitchExecutor) executor).getToMatch(), references);
+			}
+			if (executor instanceof ForEachExecutor) {
+				getReferences(((ForEachExecutor) executor).getForEach(), references);
+			}
+			if (executor instanceof EvaluateExecutor) {
+				getReferences(((EvaluateExecutor) executor).getOperation(), references);
+			}
+			if (executor instanceof ExecutorGroup) {
+				getReferences((ExecutorGroup) executor, references);
+			}
+		}
+	}
+	
+	public static void getReferences(Operation<?> operation, Set<String> references) {
+		if (operation != null) {
+			if (operation.getType() == OperationType.METHOD) {
+				QueryPart queryPart = operation.getParts().get(0);
+				// contains the name of the method
+				if (queryPart.getContent() instanceof String) {
+					references.add((String) queryPart.getContent());
+				}
+			}
+			for (QueryPart part : operation.getParts()) {
+				if (part.getType() == QueryPart.Type.OPERATION) {
+					getReferences((Operation<?>) part.getContent(), references);
+				}
+			}
+		}
 	}
 
 	@Override
 	public List<Validation<?>> updateReference(GlueServiceArtifact artifact, String from, String to) throws IOException {
-		// TODO: implement
-		return new ArrayList<Validation<?>>();
+		List<Validation<?>> messages = new ArrayList<Validation<?>>();
+		try {
+			artifact.setContent(artifact.getContent().replaceAll("\\b" + Pattern.quote(from) + "\\b", Matcher.quoteReplacement(to)));
+		}
+		catch (ParseException e) {
+			messages.add(new ValidationMessage(Severity.ERROR, e.getMessage()));
+		}
+		return messages;
 	}
 
 }

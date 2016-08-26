@@ -33,9 +33,11 @@ public class GlueServiceArtifact implements DefinedService {
 	private ResourceContainer<?> directory;
 	private ResourceContainer<?> resourceDirectory;
 	private GlueParserProvider provider;
+	private Repository repository;
 
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository) throws IOException {
 		this.directory = directory;
+		this.repository = repository;
 		provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository));
 		scriptRepository = new DynamicScriptRepository(provider);
 		resourceDirectory = (ResourceContainer<?>) directory.getChild(EAIResourceRepository.PRIVATE);
@@ -130,4 +132,9 @@ public class GlueServiceArtifact implements DefinedService {
 	public ParserProvider getParserProvider() {
 		return provider;
 	}
+
+	public Repository getRepository() {
+		return repository;
+	}
+	
 }
