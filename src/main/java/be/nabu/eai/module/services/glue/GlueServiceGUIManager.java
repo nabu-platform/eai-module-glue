@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLConnection;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -46,6 +48,9 @@ import be.nabu.eai.repository.api.ArtifactManager;
 import be.nabu.eai.repository.api.Entry;
 import be.nabu.eai.repository.api.ResourceEntry;
 import be.nabu.eai.repository.resources.RepositoryEntry;
+import be.nabu.glue.api.MethodDescription;
+import be.nabu.glue.api.MethodProvider;
+import be.nabu.glue.api.ParameterDescription;
 import be.nabu.jfx.control.ace.AceEditor;
 import be.nabu.jfx.control.tree.Tree;
 import be.nabu.libs.property.api.Property;
@@ -76,7 +81,47 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 	public GlueServiceGUIManager(String name, Class<GlueServiceArtifact> artifactClass, ArtifactManager<GlueServiceArtifact> artifactManager) {
 		super(name, artifactClass, artifactManager);
 	}
+	
+	public List<String> getAutocomplete(GlueServiceArtifact artifact) {
+		List<String> methods = new ArrayList<String>();
+		MethodProvider[] methodProviders = artifact.getParserProvider().getMethodProviders(artifact.getScriptRepository());
+		for (MethodProvider provider : methodProviders) {
+			for (MethodDescription description : provider.getAvailableMethods()) {
+				StringBuilder builder = new StringBuilder();
+				builder.append((description.getNamespace() == null ? "" : description.getNamespace() + ".") + description.getName());
+				builder.append("(");
+				boolean first = true;
+				for (ParameterDescription parameter : description.getParameters()) {
+					if (first) {
+						first = false;
+					}
+					else {
+						builder.append(", ");
+					}
+					builder.append(parameter.getName());
+				}
+				builder.append(")");
+				methods.add(builder.toString());
+			}
+		}
+		return methods;
+	}
 
+	protected void addAutocomplete(GlueServiceArtifact artifact, final AceEditor ace) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				List<String> autocomplete = getAutocomplete(artifact);
+				Platform.runLater(new Runnable() {
+					@Override
+					public void run() {
+						ace.addContains("Methods", autocomplete);
+					}
+				});
+			}
+		}).start();
+	}
+	
 	@Override
 	public void display(MainController controller, AnchorPane pane, final GlueServiceArtifact artifact) throws IOException, ParseException {
 		// TODO Auto-generated method stub
@@ -85,6 +130,8 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.VERTICAL);
 		final AceEditor ace = getEditor(artifact);
+		ace.setLiveAutocompletion(false);
+		addAutocomplete(artifact, ace);
 
 		TabPane tabs = new TabPane();
 		
@@ -98,7 +145,6 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 
 		split.getItems().addAll(ace.getWebView(), tabs);
 		pane.getChildren().add(split);
-
 		
 		AnchorPane.setBottomAnchor(split, 0d);
 		AnchorPane.setTopAnchor(split, 0d);

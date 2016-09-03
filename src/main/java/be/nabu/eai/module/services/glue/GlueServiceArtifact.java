@@ -9,7 +9,6 @@ import java.util.Set;
 import be.nabu.eai.repository.EAIResourceRepository;
 import be.nabu.eai.repository.api.Repository;
 import be.nabu.glue.api.ExecutionEnvironment;
-import be.nabu.glue.api.ParserProvider;
 import be.nabu.glue.api.ScriptRepository;
 import be.nabu.glue.impl.SimpleExecutionEnvironment;
 import be.nabu.glue.impl.parsers.GlueParserProvider;
@@ -129,12 +128,16 @@ public class GlueServiceArtifact implements DefinedService {
 		return executionEnvironment;
 	}
 	
-	public ParserProvider getParserProvider() {
+	public GlueParserProvider getParserProvider() {
 		return provider;
 	}
 
 	public Repository getRepository() {
 		return repository;
+	}
+
+	public ScriptRepository getScriptRepository() {
+		return scriptRepository;
 	}
 	
 }
