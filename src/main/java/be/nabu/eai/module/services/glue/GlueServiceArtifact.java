@@ -50,7 +50,7 @@ public class GlueServiceArtifact implements DefinedService {
 			Charset.defaultCharset(),
 			(ResourceContainer<?>) resourceDirectory
 		);
-		executionEnvironment = new SimpleExecutionEnvironment("local");
+		executionEnvironment = new SimpleExecutionEnvironment(repository.getName());
 		this.id = id;
 	}
 
