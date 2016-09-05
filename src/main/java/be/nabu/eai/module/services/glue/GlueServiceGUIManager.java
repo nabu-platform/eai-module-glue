@@ -332,12 +332,17 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 				Resource resource = artifact.getResourceDirectory().getChild(arg2);
 				if (resource != null && !managers.containsKey(resource)) {
 					ResourceManagerInstance instance = ResourceManagerFactory.getInstance().manage(resource);
-					Tab tab = new Tab(resource.getName());
-					tab.setId(resource.getName());
-					tab.setContent(instance.getView());
-					tabs.getTabs().add(tab);
-					tabs.getSelectionModel().select(tab);
-					managers.put(resource, instance);
+					if (instance != null) {
+						Tab tab = new Tab(resource.getName());
+						tab.setId(resource.getName());
+						tab.setContent(instance.getView());
+						tabs.getTabs().add(tab);
+						tabs.getSelectionModel().select(tab);
+						managers.put(resource, instance);
+					}
+					else {
+						MainController.getInstance().notify(new ValidationMessage(Severity.WARNING, "No viewer is associated with this resource"));
+					}
 				}
 			}
 		});
