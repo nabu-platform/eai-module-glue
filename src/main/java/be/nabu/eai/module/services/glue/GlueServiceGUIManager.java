@@ -55,6 +55,7 @@ import be.nabu.jfx.control.ace.AceEditor;
 import be.nabu.jfx.control.tree.Tree;
 import be.nabu.libs.property.api.Property;
 import be.nabu.libs.property.api.Value;
+import be.nabu.libs.resources.ResourceUtils;
 import be.nabu.libs.resources.api.ManageableContainer;
 import be.nabu.libs.resources.api.ReadableResource;
 import be.nabu.libs.resources.api.Resource;
@@ -248,7 +249,52 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		});
 		final TabPane tabs = new TabPane();
 		
+		Button rename = new Button("Rename");
+		rename.disableProperty().bind(resources.getSelectionModel().selectedItemProperty().isNull());
+		rename.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			@Override
+			public void handle(ActionEvent arg0) {
+				SimpleProperty<String> mainProperty = new SimpleProperty<String>("New Name", String.class, true);
+				Set properties = new LinkedHashSet(Arrays.asList(new Property [] {
+					mainProperty
+				}));
+				final SimplePropertyUpdater updater = new SimplePropertyUpdater(true, properties);
+				EAIDeveloperUtils.buildPopup(MainController.getInstance(), updater, "Rename Resource", new EventHandler<ActionEvent>() {
+					@Override
+					public void handle(ActionEvent arg0) {
+						String newName = updater.getValue("New Name");
+						String selectedItem = resources.getSelectionModel().getSelectedItem();
+						if (newName != null && selectedItem != null) {
+							if (artifact.getResourceDirectory().getChild(newName) == null) {
+								// close any tab related to selected item
+								for (int i = tabs.getTabs().size() - 1; i >= 0; i--) {
+									if (tabs.getTabs().get(i).getId().equals(selectedItem)) {
+										tabs.getTabs().remove(i);
+									}
+								}
+								try {
+									ResourceUtils.rename(artifact.getResourceDirectory().getChild(selectedItem), newName);
+									resources.getItems().remove(selectedItem);
+									resources.getItems().add(newName);
+									resources.getSelectionModel().select(newName);
+								}
+								catch (IOException e) {
+									MainController.getInstance().notify(e);
+									throw new RuntimeException(e);
+								}
+							}
+							else {
+								MainController.getInstance().notify(new ValidationMessage(Severity.ERROR, "A resource with the name '" + newName + "' already exists"));
+							}
+						}
+					}
+				});
+			}
+		});
+		
 		Button delete = new Button("Delete");
+		delete.disableProperty().bind(resources.getSelectionModel().selectedItemProperty().isNull());
 		delete.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
@@ -272,7 +318,7 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 			}
 		});
 		
-		buttons.getChildren().addAll(create, upload, delete);
+		buttons.getChildren().addAll(create, upload, rename, delete);
 		
 		for (Resource resource : artifact.getResourceDirectory()) {
 			if (resource instanceof ReadableResource) {
