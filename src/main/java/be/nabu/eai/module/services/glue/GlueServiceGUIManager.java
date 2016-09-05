@@ -363,9 +363,20 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		
 		VBox vbox = new VBox();
 		vbox.getChildren().addAll(buttons, resources);
+		vbox.setMinWidth(buttons.getPrefWidth());
 		box.getChildren().addAll(vbox, tabs);
-		HBox.setHgrow(tabs, Priority.ALWAYS);
-		return box;
+		SplitPane pane = new SplitPane();
+		pane.setOrientation(Orientation.HORIZONTAL);
+		pane.getItems().addAll(vbox, tabs);
+//		HBox.setHgrow(tabs, Priority.SOMETIMES);
+//		HBox.setHgrow(vbox, Priority.NEVER);
+		AnchorPane root = new AnchorPane();
+		root.getChildren().add(pane);
+		AnchorPane.setBottomAnchor(pane, 0d);
+		AnchorPane.setLeftAnchor(pane, 0d);
+		AnchorPane.setTopAnchor(pane, 0d);
+		AnchorPane.setRightAnchor(pane, 0d);
+		return root;
 	}
 
 	protected SplitPane getIface(MainController controller, final GlueServiceArtifact artifact) {
