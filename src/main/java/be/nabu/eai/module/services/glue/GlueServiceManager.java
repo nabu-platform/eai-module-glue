@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import be.nabu.eai.repository.api.ArtifactManager;
 import be.nabu.eai.repository.api.Entry;
+import be.nabu.eai.repository.api.ModifiableNodeEntry;
 import be.nabu.eai.repository.api.ResourceEntry;
 import be.nabu.glue.api.AssignmentExecutor;
 import be.nabu.glue.api.Executor;
@@ -78,6 +79,9 @@ public class GlueServiceManager implements ArtifactManager<GlueServiceArtifact> 
 		// if the child exists but there is no source, you wiped it or something, remove it
 		else if (child != null) {
 			((ManageableContainer<?>) entry.getContainer()).delete("script.glue");
+		}
+		if (entry instanceof ModifiableNodeEntry) {
+			((ModifiableNodeEntry) entry).updateNode(getReferences(artifact));
 		}
 		return new ArrayList<Validation<?>>();
 	}
