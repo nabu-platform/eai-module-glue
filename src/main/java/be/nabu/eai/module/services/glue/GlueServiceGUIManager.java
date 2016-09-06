@@ -28,6 +28,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -135,6 +136,7 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		addAutocomplete(artifact, ace);
 
 		TabPane tabs = new TabPane();
+		tabs.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 		
 		Tab tabIface = new Tab("Interface");
 		tabIface.setContent(getIface(controller, artifact));
