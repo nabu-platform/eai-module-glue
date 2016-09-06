@@ -421,10 +421,12 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		});
 		ace.subscribe(AceEditor.SAVE, new EventHandler<Event>() {
 			@Override
-			public void handle(Event arg0) {
+			public void handle(Event event) {
 				try {
 					updateContent(artifact, ace);
 					MainController.getInstance().save(artifact.getId());
+					MainController.getInstance().notify(new ValidationMessage(Severity.INFO, "Glue service saved"));
+					event.consume();
 				}
 				catch (Exception e) {
 					MainController.getInstance().notify(new ValidationMessage(Severity.ERROR, "Could not save: " + e.getMessage()));
