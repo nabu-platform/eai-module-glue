@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import be.nabu.glue.ScriptUtils;
 import be.nabu.glue.api.ParserProvider;
 import be.nabu.glue.api.Script;
 import be.nabu.glue.api.ScriptRepository;
+import be.nabu.glue.utils.ScriptUtils;
 
 public class DynamicScriptRepository implements ScriptRepository {
 

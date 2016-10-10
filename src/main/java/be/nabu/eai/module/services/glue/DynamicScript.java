@@ -14,7 +14,7 @@ import be.nabu.glue.api.ExecutorGroup;
 import be.nabu.glue.api.Parser;
 import be.nabu.glue.api.Script;
 import be.nabu.glue.api.ScriptRepository;
-import be.nabu.glue.impl.executors.SequenceExecutor;
+import be.nabu.glue.core.impl.executors.SequenceExecutor;
 import be.nabu.libs.resources.ResourceUtils;
 import be.nabu.libs.resources.api.DetachableResource;
 import be.nabu.libs.resources.api.ReadableResource;
