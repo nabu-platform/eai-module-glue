@@ -40,7 +40,7 @@ public class GlueServiceArtifact implements DefinedService {
 		provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository));
 		scriptRepository = new DynamicScriptRepository(provider);
 		resourceDirectory = (ResourceContainer<?>) directory.getChild(EAIResourceRepository.PRIVATE);
-		if (resourceDirectory == null) {
+		if (resourceDirectory == null && directory instanceof ManageableContainer) {
 			resourceDirectory = (ResourceContainer<?>) ((ManageableContainer<?>) directory).create(EAIResourceRepository.PRIVATE, Resource.CONTENT_TYPE_DIRECTORY);
 		}
 		script = new DynamicScript(

@@ -32,7 +32,6 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import be.nabu.eai.developer.MainController;
 import be.nabu.eai.developer.ResourceManagerFactory;
@@ -322,9 +321,11 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		
 		buttons.getChildren().addAll(create, upload, rename, delete);
 		
-		for (Resource resource : artifact.getResourceDirectory()) {
-			if (resource instanceof ReadableResource) {
-				resources.getItems().add(resource.getName());
+		if (artifact.getResourceDirectory() != null) {
+			for (Resource resource : artifact.getResourceDirectory()) {
+				if (resource instanceof ReadableResource) {
+					resources.getItems().add(resource.getName());
+				}
 			}
 		}
 		
