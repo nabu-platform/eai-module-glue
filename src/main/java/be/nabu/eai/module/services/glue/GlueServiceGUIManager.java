@@ -411,7 +411,7 @@ public class GlueServiceGUIManager extends BasePortableGUIManager<GlueServiceArt
 		ace.getWebView().focusedProperty().addListener(new ChangeListener<Boolean>() {
 			@Override
 			public void changed(ObservableValue<? extends Boolean> arg0, Boolean arg1, Boolean arg2) {
-				if (arg2 && (artifact.getContent() == null || !artifact.getContent().equals(ace.getContent()))) {
+				if (artifact.getContent() == null || !artifact.getContent().equals(ace.getContent())) {
 					updateContent(artifact, ace);
 				}
 			}

@@ -59,11 +59,6 @@
 			<artifactId>glue-json</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>be.nabu.glue</groupId>
-			<artifactId>glue-series</artifactId>
-		</dependency>
-		
-		<dependency>
 			<groupId>be.nabu.utils</groupId>
 			<artifactId>utils-xml</artifactId>
 			<scope>provided</scope>
