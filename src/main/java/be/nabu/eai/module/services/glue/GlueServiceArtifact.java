@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Set;
 
 import be.nabu.eai.repository.EAIResourceRepository;
+import be.nabu.eai.repository.RepositoryTypeResolver;
 import be.nabu.eai.repository.api.Repository;
 import be.nabu.glue.api.ExecutionEnvironment;
 import be.nabu.glue.api.ScriptRepository;
@@ -20,6 +22,8 @@ import be.nabu.libs.resources.api.ResourceContainer;
 import be.nabu.libs.services.api.DefinedService;
 import be.nabu.libs.services.api.ServiceInstance;
 import be.nabu.libs.services.api.ServiceInterface;
+import be.nabu.libs.types.DefinedTypeResolverFactory;
+import be.nabu.libs.types.MultipleDefinedTypeResolver;
 import be.nabu.utils.io.IOUtils;
 
 public class GlueServiceArtifact implements DefinedService {
@@ -64,6 +68,11 @@ public class GlueServiceArtifact implements DefinedService {
 			synchronized(this) {
 				if (service == null) {
 					service = new GlueService(script, executionEnvironment, null);
+					MultipleDefinedTypeResolver typeResolver = new MultipleDefinedTypeResolver(Arrays.asList(
+						new RepositoryTypeResolver(getRepository()),
+						DefinedTypeResolverFactory.getInstance().getResolver()
+					));
+					service.setTypeResolver(typeResolver);
 				}
 			}
 		}
