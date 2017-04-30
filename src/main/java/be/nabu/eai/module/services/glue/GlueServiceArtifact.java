@@ -13,6 +13,8 @@ import be.nabu.eai.repository.api.Repository;
 import be.nabu.glue.api.ExecutionEnvironment;
 import be.nabu.glue.api.ScriptRepository;
 import be.nabu.glue.core.impl.parsers.GlueParserProvider;
+import be.nabu.glue.core.repositories.DynamicScript;
+import be.nabu.glue.core.repositories.DynamicScriptRepository;
 import be.nabu.glue.impl.SimpleExecutionEnvironment;
 import be.nabu.glue.services.GlueService;
 import be.nabu.glue.services.ServiceMethodProvider;
