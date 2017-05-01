@@ -21,6 +21,7 @@ import be.nabu.glue.services.ServiceMethodProvider;
 import be.nabu.libs.resources.api.ManageableContainer;
 import be.nabu.libs.resources.api.Resource;
 import be.nabu.libs.resources.api.ResourceContainer;
+import be.nabu.libs.services.DefinedServiceInterfaceResolverFactory;
 import be.nabu.libs.services.api.DefinedService;
 import be.nabu.libs.services.api.ServiceInstance;
 import be.nabu.libs.services.api.ServiceInterface;
@@ -75,6 +76,16 @@ public class GlueServiceArtifact implements DefinedService {
 						DefinedTypeResolverFactory.getInstance().getResolver()
 					));
 					service.setTypeResolver(typeResolver);
+					String iface = null;
+					try {
+						iface = script.getRoot() == null || script.getRoot().getContext() == null || script.getRoot().getContext().getAnnotations() == null 
+							? null
+							: script.getRoot().getContext().getAnnotations().get("interface");
+					}
+					catch (Exception e) {
+						// can not get iface, it's ok
+					}
+					service.setImplementedInterface(iface == null ? null : DefinedServiceInterfaceResolverFactory.getInstance().getResolver().resolve(iface));
 				}
 			}
 		}
