@@ -144,6 +144,11 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>be.nabu.libs.metrics</groupId>
+			<artifactId>metrics-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>be.nabu.jfx</groupId>
 			<artifactId>jfx-control-ace</artifactId>
 			<scope>provided</scope>
