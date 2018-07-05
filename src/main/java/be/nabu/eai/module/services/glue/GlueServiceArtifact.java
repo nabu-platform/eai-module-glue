@@ -42,9 +42,13 @@ public class GlueServiceArtifact implements DefinedService {
 	private Repository repository;
 
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository) throws IOException {
+		this(id, directory, repository, null);
+	}
+	
+	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository, AllowTargetSwitchProvider allowTargetSwitchProvider) throws IOException {
 		this.directory = directory;
 		this.repository = repository;
-		provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository));
+		provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), allowTargetSwitchProvider)));
 		scriptRepository = new DynamicScriptRepository(provider);
 		resourceDirectory = (ResourceContainer<?>) directory.getChild(EAIResourceRepository.PRIVATE);
 		if (resourceDirectory == null && directory instanceof ManageableContainer) {
