@@ -23,10 +23,13 @@ import be.nabu.libs.resources.api.Resource;
 import be.nabu.libs.resources.api.ResourceContainer;
 import be.nabu.libs.services.DefinedServiceInterfaceResolverFactory;
 import be.nabu.libs.services.api.DefinedService;
+import be.nabu.libs.services.api.ExecutionContext;
+import be.nabu.libs.services.api.Service;
 import be.nabu.libs.services.api.ServiceInstance;
 import be.nabu.libs.services.api.ServiceInterface;
 import be.nabu.libs.types.DefinedTypeResolverFactory;
 import be.nabu.libs.types.MultipleDefinedTypeResolver;
+import be.nabu.libs.types.api.ComplexContent;
 import be.nabu.utils.io.IOUtils;
 
 public class GlueServiceArtifact implements DefinedService {
@@ -42,7 +45,12 @@ public class GlueServiceArtifact implements DefinedService {
 	private Repository repository;
 
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository) throws IOException {
-		this(id, directory, repository, null);
+		this(id, directory, repository, new AllowTargetSwitchProvider() {
+			@Override
+			public boolean allowTargetSwitch(Service service, ExecutionContext context, ComplexContent input) {
+				return !(service instanceof GlueServiceArtifact);
+			}
+		});
 	}
 	
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository, AllowTargetSwitchProvider allowTargetSwitchProvider) throws IOException {
