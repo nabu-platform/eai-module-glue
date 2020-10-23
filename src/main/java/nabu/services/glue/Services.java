@@ -14,14 +14,17 @@ import be.nabu.libs.resources.memory.MemoryDirectory;
 import be.nabu.libs.services.ServiceRuntime;
 import be.nabu.libs.services.api.ExecutionContext;
 import be.nabu.libs.services.api.ServiceException;
+import be.nabu.libs.types.ComplexContentWrapperFactory;
+import be.nabu.libs.types.api.ComplexContent;
 
 @WebService
 public class Services {
 	
 	private ExecutionContext context;
 	
+	@SuppressWarnings("unchecked")
 	@WebResult(name = "output")
-	public Object execute(@WebParam(name = "name") String name, @WebParam(name = "script") String script) throws IOException, ServiceException, ParseException {
+	public Object execute(@WebParam(name = "name") String name, @WebParam(name = "script") String script, @WebParam(name = "context") Object pipeline) throws IOException, ServiceException, ParseException {
 		if (script == null) {
 			return null;
 		}
@@ -34,6 +37,17 @@ public class Services {
 		GlueServiceArtifact glueService = new GlueServiceArtifact("nabu.services.glue.dynamic." + name, new MemoryDirectory(), EAIResourceRepository.getInstance());
 		glueService.setContent(script);
 		ServiceRuntime runtime = new ServiceRuntime(glueService, context);
-		return runtime.run(glueService.getServiceInterface().getInputDefinition().newInstance());
+		ComplexContent input;
+		if (pipeline instanceof ComplexContent) {
+			input = (ComplexContent) pipeline;
+		}
+		else if (pipeline != null) {
+			input = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(pipeline);
+		}
+		else {
+			input = glueService.getServiceInterface().getInputDefinition().newInstance();
+		}
+		return runtime.run(input);
 	}
+	
 }
