@@ -58,6 +58,22 @@
 			<groupId>be.nabu.glue</groupId>
 			<artifactId>glue-json</artifactId>
 		</dependency>
+		
+		<dependency>
+			<groupId>be.nabu.glue</groupId>
+			<artifactId>glue-metrics</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.metrics</groupId>
+			<artifactId>metrics-core</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.utils</groupId>
+			<artifactId>utils-cep</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>be.nabu.utils</groupId>
 			<artifactId>utils-xml</artifactId>
