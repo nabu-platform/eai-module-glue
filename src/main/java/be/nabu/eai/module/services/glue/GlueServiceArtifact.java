@@ -45,18 +45,29 @@ public class GlueServiceArtifact implements DefinedService {
 	private Repository repository;
 
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository) throws IOException {
+		this(id, directory, repository, false);
+	}
+	
+	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository, boolean sandboxed) throws IOException {
 		this(id, directory, repository, new AllowTargetSwitchProvider() {
 			@Override
 			public boolean allowTargetSwitch(Service service, ExecutionContext context, ComplexContent input) {
 				return !(service instanceof GlueServiceArtifact);
 			}
-		});
+		}, sandboxed);
 	}
 	
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository, AllowTargetSwitchProvider allowTargetSwitchProvider) throws IOException {
+		this(id, directory, repository, allowTargetSwitchProvider, false);
+	}
+	
+	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository, AllowTargetSwitchProvider allowTargetSwitchProvider, boolean sandboxed) throws IOException {
 		this.directory = directory;
 		this.repository = repository;
-		provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), allowTargetSwitchProvider)));
+		provider = sandboxed ? new GlueParserProvider() : new GlueParserProvider(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), allowTargetSwitchProvider)));
+		if (sandboxed) {
+			provider.setSandboxed(true);
+		}
 		scriptRepository = new DynamicScriptRepository(provider);
 		resourceDirectory = (ResourceContainer<?>) directory.getChild(EAIResourceRepository.PRIVATE);
 		if (resourceDirectory == null && directory instanceof ManageableContainer) {
@@ -70,6 +81,9 @@ public class GlueServiceArtifact implements DefinedService {
 			(ResourceContainer<?>) resourceDirectory
 		);
 		executionEnvironment = new SimpleExecutionEnvironment(repository.getName());
+		if (sandboxed) {
+			executionEnvironment.getParameters().put("sandboxed", "true");
+		}
 		this.id = id;
 	}
 
