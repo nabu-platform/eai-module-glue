@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.jws.WebParam;
@@ -20,7 +21,6 @@ import be.nabu.eai.module.services.glue.IntelligentServiceRunner;
 import be.nabu.eai.repository.EAIResourceRepository;
 import be.nabu.glue.api.ExecutionEnvironment;
 import be.nabu.glue.api.ExecutionException;
-import be.nabu.glue.api.Executor;
 import be.nabu.glue.api.ExecutorGroup;
 import be.nabu.glue.api.LabelEvaluator;
 import be.nabu.glue.api.Parser;
@@ -77,7 +77,7 @@ public class Services {
 		return runtime.run(input);
 	}
 	
-	public Object evaluate(@WebParam(name = "rule") String rule, @WebParam(name = "context") Object pipeline) throws IOException, ParseException, ExecutionException {
+	public Object evaluate(@WebParam(name = "rule") String rule, @WebParam(name = "context") List<Object> pipeline) throws IOException, ParseException, ExecutionException {
 		if (parser == null || EAIResourceRepository.isDevelopment()) {
 			EAIResourceRepository repository = EAIResourceRepository.getInstance();
 			GlueParserProvider provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), new AllowTargetSwitchProvider() {
@@ -109,7 +109,12 @@ public class Services {
 				return true;
 			}
 		}, false);
-		Map<String, Object> input = toPipeline(pipeline);
+		Map<String, Object> input = new HashMap<String, Object>();
+		if (pipeline != null) {
+			for (Object single : pipeline) {
+				input.putAll(toPipeline(single));
+			}
+		}
 		ScriptRuntime runtime = new ScriptRuntime(new Script() {
 			@Override
 			public Iterator<String> iterator() {
