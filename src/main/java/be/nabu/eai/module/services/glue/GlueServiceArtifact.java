@@ -7,6 +7,9 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import be.nabu.eai.repository.EAIResourceRepository;
 import be.nabu.eai.repository.RepositoryTypeResolver;
 import be.nabu.eai.repository.api.Repository;
@@ -30,6 +33,8 @@ import be.nabu.libs.services.api.ServiceInterface;
 import be.nabu.libs.types.DefinedTypeResolverFactory;
 import be.nabu.libs.types.MultipleDefinedTypeResolver;
 import be.nabu.libs.types.api.ComplexContent;
+import be.nabu.libs.types.api.DefinedType;
+import be.nabu.libs.types.api.DefinedTypeResolver;
 import be.nabu.utils.io.IOUtils;
 
 public class GlueServiceArtifact implements DefinedService {
@@ -43,6 +48,7 @@ public class GlueServiceArtifact implements DefinedService {
 	private ResourceContainer<?> resourceDirectory;
 	private GlueParserProvider provider;
 	private Repository repository;
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository) throws IOException {
 		this(id, directory, repository, false);
@@ -99,23 +105,37 @@ public class GlueServiceArtifact implements DefinedService {
 					service = new GlueService(script, executionEnvironment, null);
 					MultipleDefinedTypeResolver typeResolver = new MultipleDefinedTypeResolver(Arrays.asList(
 						new RepositoryTypeResolver(getRepository()),
-						DefinedTypeResolverFactory.getInstance().getResolver()
+						DefinedTypeResolverFactory.getInstance().getResolver(),
+						// this works as a fallback, if no one else could resolve it, we don't want an error which would block the entire script
+						// instead we want to use a java object
+						new DefinedTypeResolver() {
+							@Override
+							public DefinedType resolve(String id) {
+								logger.warn("Could not resolve type '" + id + "', falling back to Object");
+								return DefinedTypeResolverFactory.getInstance().getResolver().resolve(Object.class.getName());
+							}
+						}
 					));
 					service.setTypeResolver(typeResolver);
-					String iface = null;
-					try {
-						iface = script.getRoot() == null || script.getRoot().getContext() == null || script.getRoot().getContext().getAnnotations() == null 
-							? null
-							: script.getRoot().getContext().getAnnotations().get("interface");
-					}
-					catch (Exception e) {
-						// can not get iface, it's ok
-					}
+					String iface = getInterface();
 					service.setImplementedInterface(iface == null ? null : DefinedServiceInterfaceResolverFactory.getInstance().getResolver().resolve(iface));
 				}
 			}
 		}
 		return service;
+	}
+
+	public String getInterface() {
+		String iface = null;
+		try {
+			iface = script.getRoot() == null || script.getRoot().getContext() == null || script.getRoot().getContext().getAnnotations() == null 
+				? null
+				: script.getRoot().getContext().getAnnotations().get("interface");
+		}
+		catch (Exception e) {
+			// can not get iface, it's ok
+		}
+		return iface;
 	}
 	
 	protected void reset() {

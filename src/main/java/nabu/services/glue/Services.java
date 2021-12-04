@@ -139,9 +139,8 @@ public class Services {
 			}
 			@Override
 			public Charset getCharset() {
-				return null;
+				return Charset.defaultCharset();
 			}
-
 			@Override
 			public Parser getParser() {
 				return parser;

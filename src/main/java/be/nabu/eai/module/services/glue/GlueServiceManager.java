@@ -107,6 +107,11 @@ public class GlueServiceManager implements ArtifactManager<GlueServiceArtifact> 
 				iterator.remove();
 			}
 		}
+		// if you implement an interface, add it as dependency
+		String interface1 = artifact.getInterface();
+		if (interface1 != null) {
+			references.add(interface1);
+		}
 		return new ArrayList<String>(references);
 	}
 	
