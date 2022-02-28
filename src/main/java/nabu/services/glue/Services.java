@@ -26,6 +26,7 @@ import be.nabu.glue.api.LabelEvaluator;
 import be.nabu.glue.api.Parser;
 import be.nabu.glue.api.Script;
 import be.nabu.glue.api.ScriptRepository;
+import be.nabu.glue.core.impl.GlueUtils;
 import be.nabu.glue.core.impl.executors.EvaluateExecutor;
 import be.nabu.glue.core.impl.parsers.GlueParser;
 import be.nabu.glue.core.impl.parsers.GlueParserProvider;
@@ -48,6 +49,10 @@ public class Services {
 	
 	private ExecutionContext context;
 	private static GlueParser parser;
+	
+	public String toSql(@WebParam(name = "rule") String rule, @WebParam(name = "tableName") String tableName) throws ParseException {
+		return GlueUtils.toSql(rule, tableName);
+	}
 	
 	@SuppressWarnings("unchecked")
 	@WebResult(name = "output")

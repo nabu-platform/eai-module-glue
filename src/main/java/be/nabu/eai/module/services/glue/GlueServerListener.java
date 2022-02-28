@@ -1,9 +1,7 @@
 package be.nabu.eai.module.services.glue;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +24,7 @@ import be.nabu.glue.core.repositories.DynamicScriptRepository;
 import be.nabu.glue.core.repositories.ScannableScriptRepository;
 import be.nabu.glue.impl.SimpleExecutionEnvironment;
 import be.nabu.glue.metrics.GlueMetrics;
+import be.nabu.glue.services.ServiceMethodProvider;
 import be.nabu.glue.utils.DynamicScript;
 import be.nabu.glue.utils.ScriptRuntime;
 import be.nabu.libs.http.api.server.HTTPServer;
@@ -130,10 +129,11 @@ public class GlueServerListener implements ServerListener {
 		}
 		
 		try {
-			GlueParserProvider templateProvider = new GlueParserProvider(new StaticJavaMethodProvider(new GlueTemplaterMethods(EAIResourceRepository.getInstance())));
+			EAIResourceRepository repository = EAIResourceRepository.getInstance();
+			GlueParserProvider templateProvider = new GlueParserProvider(new StaticJavaMethodProvider(new GlueTemplaterMethods(repository)), new ServiceMethodProvider(repository, repository));
 			DynamicScriptRepository dynamicRepository = new DynamicScriptRepository(templateProvider);
 			SimpleExecutionEnvironment simpleExecutionEnvironment = new SimpleExecutionEnvironment("default");
-			EAIResourceRepository.getInstance().getTemplaters().add(new Templater() {
+			repository.getTemplaters().add(new Templater() {
 				@Override
 				public String template(String content) {
 					try {
