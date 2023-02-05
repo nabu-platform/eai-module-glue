@@ -43,6 +43,7 @@ import be.nabu.libs.types.ComplexContentWrapperFactory;
 import be.nabu.libs.types.TypeUtils;
 import be.nabu.libs.types.api.ComplexContent;
 import be.nabu.libs.types.api.Element;
+import be.nabu.libs.types.java.BeanInstance;
 
 @WebService
 public class Services {
@@ -166,6 +167,12 @@ public class Services {
 	
 	@SuppressWarnings("unchecked")
 	private static Map<String, Object> toPipeline(Object stuff) {
+		if (stuff instanceof Map) {
+			return (Map<String, Object>) stuff;
+		}
+		else if (stuff instanceof BeanInstance && ((BeanInstance<?>) stuff).getUnwrapped() instanceof Map) {
+			return (Map<String, Object>) ((BeanInstance<?>) stuff).getUnwrapped();
+		}
 		Map<String, Object> pipeline = new HashMap<String, Object>();
 		if (stuff != null) {
 			if (!(stuff instanceof ComplexContent)) {
