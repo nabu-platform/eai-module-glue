@@ -95,6 +95,11 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>be.nabu.utils</groupId>
+			<artifactId>utils-security</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>be.nabu.libs.evaluator</groupId>
 			<artifactId>evaluator-api</artifactId>
 			<scope>provided</scope>
