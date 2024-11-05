@@ -83,7 +83,7 @@ public class Services {
 		return runtime.run(input);
 	}
 	
-	public Object evaluate(@WebParam(name = "rule") String rule, @WebParam(name = "context") List<Object> pipeline) throws IOException, ParseException, ExecutionException {
+	public Object evaluate(@WebParam(name = "rule") String rule, @WebParam(name = "context") List<Object> pipeline, @WebParam(name = "returnPipeline") Boolean returnPipeline) throws IOException, ParseException, ExecutionException {
 		if (parser == null || EAIResourceRepository.isDevelopment()) {
 			EAIResourceRepository repository = EAIResourceRepository.getInstance();
 			GlueParserProvider provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), new AllowTargetSwitchProvider() {
@@ -162,7 +162,7 @@ public class Services {
 		}, executionContext, input);
 		runtime.run();
 		// let's return the last evaluation you did that was not particularly assigned to something
-		return executionContext.getPipeline().get("$result");
+		return returnPipeline != null && returnPipeline ? executionContext.getPipeline() : executionContext.getPipeline().get("$result");
 	}
 	
 	@SuppressWarnings("unchecked")
