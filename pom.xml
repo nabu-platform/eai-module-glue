@@ -167,5 +167,10 @@
 			<artifactId>jfx-control-ace</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.types</groupId>
+			<artifactId>types-definition-xml</artifactId>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 </project>
