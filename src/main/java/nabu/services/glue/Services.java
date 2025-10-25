@@ -17,11 +17,13 @@
 
 package nabu.services.glue;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -30,11 +32,14 @@ import java.util.Map;
 import javax.jws.WebParam;
 import javax.jws.WebResult;
 import javax.jws.WebService;
+import javax.validation.constraints.NotNull;
 
 import be.nabu.eai.api.NamingConvention;
 import be.nabu.eai.module.services.glue.AllowTargetSwitchProvider;
+import be.nabu.eai.module.services.glue.DynamicCacheProvider;
 import be.nabu.eai.module.services.glue.GlueServiceArtifact;
 import be.nabu.eai.module.services.glue.IntelligentServiceRunner;
+import be.nabu.eai.repository.EAIRepositoryCacheProvider;
 import be.nabu.eai.repository.EAIResourceRepository;
 import be.nabu.glue.api.ExecutionEnvironment;
 import be.nabu.glue.api.ExecutionException;
@@ -43,6 +48,7 @@ import be.nabu.glue.api.LabelEvaluator;
 import be.nabu.glue.api.Parser;
 import be.nabu.glue.api.Script;
 import be.nabu.glue.api.ScriptRepository;
+import be.nabu.glue.core.api.Lambda;
 import be.nabu.glue.core.impl.GlueUtils;
 import be.nabu.glue.core.impl.executors.EvaluateExecutor;
 import be.nabu.glue.core.impl.parsers.GlueParser;
@@ -53,11 +59,14 @@ import be.nabu.glue.services.CombinedExecutionContext;
 import be.nabu.glue.services.CombinedExecutionContextImpl;
 import be.nabu.glue.services.ServiceMethodProvider;
 import be.nabu.glue.utils.ScriptRuntime;
+import be.nabu.libs.cache.api.CacheProvider;
 import be.nabu.libs.resources.memory.MemoryDirectory;
 import be.nabu.libs.services.ServiceRuntime;
+import be.nabu.libs.services.TransactionCloseable;
 import be.nabu.libs.services.api.ExecutionContext;
 import be.nabu.libs.services.api.Service;
 import be.nabu.libs.services.api.ServiceException;
+import be.nabu.libs.services.api.Transactionable;
 import be.nabu.libs.types.ComplexContentWrapperFactory;
 import be.nabu.libs.types.TypeUtils;
 import be.nabu.libs.types.api.ComplexContent;
@@ -66,6 +75,13 @@ import be.nabu.libs.types.java.BeanInstance;
 
 @WebService
 public class Services {
+	
+	public Services() {
+		// auto
+	}
+	public Services(ExecutionContext context) {
+		this.context = context;
+	}
 	
 	private ExecutionContext context;
 	private static GlueParser parser;
@@ -223,5 +239,42 @@ public class Services {
 			}
 		}
 		return pipeline;
+	}
+	
+	public void registerLocalOverride(@WebParam(name = "serviceId") @NotNull String serviceId, @WebParam(name = "inputCondition") String inputCondition, @WebParam(name = "overrideLambda") Object overrideLambda) {
+		EAIRepositoryCacheProvider provider = (EAIRepositoryCacheProvider) EAIResourceRepository.getInstance().getCacheProvider();
+		DynamicCacheProvider dynamicProvider = null;
+		List<CacheProvider> threadLocalCacheProviders = provider.getThreadLocalCacheProviders();
+		if (threadLocalCacheProviders != null) {
+			for (CacheProvider potential : threadLocalCacheProviders) {
+				if (potential instanceof DynamicCacheProvider) {
+					dynamicProvider = (DynamicCacheProvider) potential;
+					break;
+				}
+			}
+		}
+		ScriptRuntime runtime = ScriptRuntime.getRuntime();
+		if (runtime == null) {
+			throw new IllegalStateException("Can only run this service from glue for now");
+		}
+		if (dynamicProvider == null) {
+			dynamicProvider = new DynamicCacheProvider(runtime, context);
+			// register a new provider
+			provider.registerThreadLocalCacheProvider(dynamicProvider);
+			final DynamicCacheProvider finalDynamicCacheProvider = dynamicProvider; 
+			TransactionCloseable transactionable = new TransactionCloseable(new Closeable() {
+				@Override
+				public void close() throws IOException {
+					provider.unregisterThreadLocalCacheProvider(finalDynamicCacheProvider);
+				}
+			});
+			// unregister at the root...? it was being deregistered _immediately_, i think this might be a broader issue with CombinedContext that has been flying under the radar because we don't use this much
+			ExecutionContext rootExecutionContext = ServiceRuntime.getRuntime().getRoot().getExecutionContext();
+			Collection<Transactionable> all = rootExecutionContext.getTransactionContext().getAll(null);
+			if (all == null || !all.contains(transactionable)) {
+				rootExecutionContext.getTransactionContext().add(null, transactionable);
+			}
+		}
+		dynamicProvider.registerOverride(serviceId, inputCondition, (Lambda) overrideLambda);
 	}
 }
