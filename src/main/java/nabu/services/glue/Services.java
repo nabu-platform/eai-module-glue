@@ -241,7 +241,8 @@ public class Services {
 		return pipeline;
 	}
 	
-	public void registerLocalOverride(@WebParam(name = "serviceId") @NotNull String serviceId, @WebParam(name = "inputCondition") String inputCondition, @WebParam(name = "overrideLambda") Object overrideLambda) {
+	// lets not use this for now
+	protected void registerLocalOverride(@WebParam(name = "serviceId") @NotNull String serviceId, @WebParam(name = "inputCondition") String inputCondition, @WebParam(name = "overrideLambda") Object overrideLambda) {
 		EAIRepositoryCacheProvider provider = (EAIRepositoryCacheProvider) EAIResourceRepository.getInstance().getCacheProvider();
 		DynamicCacheProvider dynamicProvider = null;
 		List<CacheProvider> threadLocalCacheProviders = provider.getThreadLocalCacheProviders();

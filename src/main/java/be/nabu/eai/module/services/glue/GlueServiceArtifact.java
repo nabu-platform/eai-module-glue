@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ import be.nabu.eai.repository.RepositoryTypeResolver;
 import be.nabu.eai.repository.api.Repository;
 import be.nabu.glue.api.ExecutionEnvironment;
 import be.nabu.glue.api.ScriptRepository;
+import be.nabu.glue.core.api.MethodProvider;
 import be.nabu.glue.core.impl.parsers.GlueParserProvider;
 import be.nabu.glue.core.repositories.DynamicScript;
 import be.nabu.glue.core.repositories.DynamicScriptRepository;
@@ -84,10 +87,15 @@ public class GlueServiceArtifact implements DefinedService {
 		this(id, directory, repository, allowTargetSwitchProvider, false);
 	}
 	
-	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository, AllowTargetSwitchProvider allowTargetSwitchProvider, boolean sandboxed) throws IOException {
+	public GlueServiceArtifact(String id, ResourceContainer<?> directory, Repository repository, AllowTargetSwitchProvider allowTargetSwitchProvider, boolean sandboxed, MethodProvider...additionalProviders) throws IOException {
 		this.directory = directory;
 		this.repository = repository;
-		provider = sandboxed ? new GlueParserProvider() : new GlueParserProvider(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), allowTargetSwitchProvider)));
+		List<MethodProvider> methodProviders = new ArrayList<>();
+		methodProviders.add(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), allowTargetSwitchProvider)));
+		if (additionalProviders != null && additionalProviders.length > 0) {
+			methodProviders.addAll(Arrays.asList(additionalProviders));
+		}
+		provider = sandboxed ? new GlueParserProvider() : new GlueParserProvider(methodProviders.toArray(new MethodProvider[methodProviders.size()]));
 		if (sandboxed) {
 			provider.setSandboxed(true);
 		}
