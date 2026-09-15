@@ -56,11 +56,14 @@ Standard operators include `+`, `-`, `*`, `/`, `%`, `**`, comparisons, `==`, `!=
 
 ## Calling functions and services
 
-Every Nabu service is exposed directly as a Glue function using its fully qualified artifact id:
+Every Nabu service is exposed directly as a Glue function using its fully qualified artifact id. Always use named parameters when calling Nabu services:
 
 ```glue
 result = my.module.services.lookup(customerId: id)
+bebatOne.crud.batteryTypePrice.services.delete(id: price/id)
 ```
+
+Positional calls are valid Glue, but values are assigned strictly in the service input definition order. Nabu services often have leading infrastructure inputs such as `connectionId` and `transactionId`, so a call like `delete(price/id)` may silently assign the id to `connectionId` instead of `id`. Named parameters avoid this ambiguity and remain correct when unrelated inputs precede the business input.
 
 A service call returns its complete Nabu output structure, including when the service has only one scalar output field. Select that field explicitly when assigning the scalar value:
 
@@ -80,13 +83,15 @@ my.module.types.Customer normalized = structure(customer, active: true)
 
 Function namespaces are optional when names are unambiguous. For example, `generate(...)` and `series.generate(...)` are equivalent. Prefer fully qualified names for Nabu services and whenever overload resolution is unclear.
 
-Calls accept positional and named parameters:
+Glue functions accept positional and named parameters:
 
 ```glue
 calculate(1, 2)
 calculate(right: 2, left: 1)
 substring(5, string: value)
 ```
+
+Use named parameters for all Nabu service calls. Reserve positional calls for small local functions or lambdas whose definition and parameter order are immediately clear.
 
 Named arguments move the positional assignment cursor to that parameter. Any later unnamed argument continues after it, so avoid mixing forms unless this behavior is intentional. Named arguments require a runtime function definition; dynamic operating-system commands may not provide one.
 
