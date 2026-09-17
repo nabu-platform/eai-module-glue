@@ -74,6 +74,18 @@ identifier = my.module.services.generateId()/identifier
 
 Do not assume a single output is automatically unwrapped. Inspect the service's output contract or its `output.xml` fragment to determine the root field name.
 
+Nabu services almost never use HTTP PATCH-style semantics where an omitted or null input means "leave the existing value unchanged." Treat service inputs as complete, explicit values unless that specific service contract documents partial-update behavior. In particular, update services commonly write every field represented by the supplied instance; omitted fields may be cleared or overwritten.
+
+For updates, fetch the current instance first unless the script already holds the complete current value, apply the intended changes to that full instance, and submit it:
+
+```glue
+current = my.module.crud.customer.services.get(id: customerId)/instance
+updatedInput = structure(current, name: updatedName)
+updated = my.module.crud.customer.services.update(instance: updatedInput)/instance
+```
+
+Do not construct a sparse update object based on the assumption that unspecified fields will be preserved. This rule applies generally to Nabu service calls, not only CRUD artifacts. Only send a partial input when the called service explicitly defines and implements partial-update semantics.
+
 Every structure known to the Nabu repository is also exposed as a Glue type by its fully qualified artifact id. It can be used for inputs, assignments, lambda parameters, and structural conversion:
 
 ```glue
