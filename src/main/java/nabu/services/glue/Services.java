@@ -54,7 +54,6 @@ import be.nabu.glue.core.impl.executors.EvaluateExecutor;
 import be.nabu.glue.core.impl.parsers.GlueParser;
 import be.nabu.glue.core.impl.parsers.GlueParserProvider;
 import be.nabu.glue.core.repositories.DynamicScriptRepository;
-import be.nabu.glue.impl.SimpleExecutionContext;
 import be.nabu.glue.services.CombinedExecutionContext;
 import be.nabu.glue.services.CombinedExecutionContextImpl;
 import be.nabu.glue.services.ServiceMethodProvider;
@@ -152,20 +151,14 @@ public class Services {
 //		}, false);
 		
 		
-		// use the combined context rather than the execution context so we can inherit state
-		CombinedExecutionContext combinedExecutionContext;
+		// Keep service state, but evaluate each rule against only its supplied pipeline.
 		ExecutionContext existingServiceContext = ServiceRuntime.getRuntime().getExecutionContext();
-		if (existingServiceContext instanceof CombinedExecutionContext) {
-			combinedExecutionContext = (CombinedExecutionContext) existingServiceContext;
-		}
-		else {
-			combinedExecutionContext = new CombinedExecutionContextImpl(existingServiceContext, executionEnvironment, new LabelEvaluator() {
-				@Override
-				public boolean shouldExecute(String label, ExecutionEnvironment environment) {
-					return true;
-				}
-			});
-		}
+		CombinedExecutionContext combinedExecutionContext = new CombinedExecutionContextImpl(existingServiceContext, executionEnvironment, new LabelEvaluator() {
+			@Override
+			public boolean shouldExecute(String label, ExecutionEnvironment environment) {
+				return true;
+			}
+		});
 		
 		Map<String, Object> input = new HashMap<String, Object>();
 		if (pipeline != null) {
