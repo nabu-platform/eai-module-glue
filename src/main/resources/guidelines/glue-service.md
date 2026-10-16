@@ -146,6 +146,25 @@ while (pending)
 - `try` also supports `catch`/`finally`, but an unhandled error exits the try and execution continues after it.
 - Use `throw(message)` or `throw(code, parameters)`; inspect nested errors with `cause($exception)`.
 
+### Nabu transaction scopes
+
+In Nabu Glue services, put `@transaction` immediately before a statement or `sequence` to give that executor its own local default transaction. The scope commits when the annotated executor succeeds, rolls back when it throws, and restores the previous default transaction afterwards. This is useful when later steps must observe committed data or asynchronous work scheduled at commit time.
+
+```glue
+@transaction
+my.module.services.submit(request: request)
+
+@transaction
+sequence
+	my.module.services.create(request: request)
+	my.module.services.link(request: request)
+
+## Runs after the scoped transaction has closed.
+verifyResult()
+```
+
+The annotation can also scope a `catch` or `finally` group. It applies only to the immediately following executable statement or group, not to a script's root. A group handles errors according to ordinary Glue `sequence`/`try` behavior; if a group catches an error internally and completes normally, its transaction commits. Nested annotated executors each restore their enclosing default transaction. Explicit transaction IDs passed to services are not overridden by this annotation. Nabu framework support is required; plain Glue does not provide this scope.
+
 ## Lambdas, methods, and sequences
 
 A short lambda treats every argument except the last as an input declaration:
