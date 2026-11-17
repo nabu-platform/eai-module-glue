@@ -38,6 +38,7 @@ import be.nabu.eai.api.NamingConvention;
 import be.nabu.eai.module.services.glue.AllowTargetSwitchProvider;
 import be.nabu.eai.module.services.glue.DynamicCacheProvider;
 import be.nabu.eai.module.services.glue.GlueServiceArtifact;
+import be.nabu.eai.module.services.glue.RepositoryServiceMethodCatalog;
 import be.nabu.eai.module.services.glue.IntelligentServiceRunner;
 import be.nabu.eai.repository.EAIRepositoryCacheProvider;
 import be.nabu.eai.repository.EAIResourceRepository;
@@ -120,7 +121,7 @@ public class Services {
 	public Object evaluate(@WebParam(name = "rule") String rule, @WebParam(name = "context") List<Object> pipeline, @WebParam(name = "returnPipeline") Boolean returnPipeline) throws IOException, ParseException, ExecutionException {
 		if (parser == null || EAIResourceRepository.isDevelopment()) {
 			EAIResourceRepository repository = EAIResourceRepository.getInstance();
-			GlueParserProvider provider = new GlueParserProvider(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), new AllowTargetSwitchProvider() {
+			GlueParserProvider provider = new GlueParserProvider(new ServiceMethodProvider(RepositoryServiceMethodCatalog.forRepository(repository), repository, new IntelligentServiceRunner(repository.getServiceRunner(), new AllowTargetSwitchProvider() {
 				@Override
 				public boolean allowTargetSwitch(Service service, ExecutionContext context, ComplexContent input) {
 					return !(service instanceof GlueServiceArtifact);

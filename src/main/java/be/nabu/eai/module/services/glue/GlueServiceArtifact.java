@@ -91,7 +91,7 @@ public class GlueServiceArtifact implements DefinedService {
 		this.directory = directory;
 		this.repository = repository;
 		List<MethodProvider> methodProviders = new ArrayList<>();
-		methodProviders.add(new ServiceMethodProvider(repository, repository, new IntelligentServiceRunner(repository.getServiceRunner(), allowTargetSwitchProvider)));
+		methodProviders.add(new ServiceMethodProvider(RepositoryServiceMethodCatalog.forRepository(repository), repository, new IntelligentServiceRunner(repository.getServiceRunner(), allowTargetSwitchProvider)));
 		if (additionalProviders != null && additionalProviders.length > 0) {
 			methodProviders.addAll(Arrays.asList(additionalProviders));
 		}

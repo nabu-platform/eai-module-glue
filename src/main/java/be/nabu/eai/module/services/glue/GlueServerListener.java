@@ -147,7 +147,7 @@ public class GlueServerListener implements ServerListener {
 		
 		try {
 			EAIResourceRepository repository = EAIResourceRepository.getInstance();
-			GlueParserProvider templateProvider = new GlueParserProvider(new StaticJavaMethodProvider(new GlueTemplaterMethods(repository)), new ServiceMethodProvider(repository, repository));
+			GlueParserProvider templateProvider = new GlueParserProvider(new StaticJavaMethodProvider(new GlueTemplaterMethods(repository)), new ServiceMethodProvider(RepositoryServiceMethodCatalog.forRepository(repository), repository, null));
 			DynamicScriptRepository dynamicRepository = new DynamicScriptRepository(templateProvider);
 			SimpleExecutionEnvironment simpleExecutionEnvironment = new SimpleExecutionEnvironment("default");
 			repository.getTemplaters().add(new Templater() {
